@@ -74,6 +74,56 @@ class GatewayService(object):
             json.dumps({'id': product_data['id']}), mimetype='application/json'
         )
 
+    @http(
+        "DELETE", "/products/<string:product_id>",
+        expected_exceptions=ProductNotFound
+    )
+    def delete_product(self, request, product_id):
+        """Deletes product by `product_id`
+        """
+        product = self.products_rpc.delete(product_id)
+        return Response(
+            json.dumps({'description': 'Successfully deleted product.', 'id': product_id}), mimetype='application/json'
+        )
+
+    @http("GET", "/orders", expected_exceptions=OrderNotFound)
+    def get_orders(self, request):
+        """Retrieve orders from the orders service.
+
+        Enhances the order details with full product details from the
+        products-service.
+        """
+        order = self._get_orders()
+        return Response(
+            GetOrderSchema(many=True).dumps(order).data,
+            mimetype='application/json'
+        )
+
+    def _get_orders(self):
+        # Retrieve order data from the orders service.
+        # Note - this may raise a remote exception that has been mapped to
+        # raise``OrderNotFound``
+        orders = self.orders_rpc.get_orders()
+
+        # Retrieve all products from the products service
+        product_map = {prod['id']: prod for prod in self.products_rpc.list()}
+
+        # get the configured image root
+        image_root = config['PRODUCT_IMAGE_ROOT']
+
+        # Enhance order details with product and image details.
+        for order in orders:
+            for item in order['order_details']:
+                product_id = item['product_id']
+                try:
+                    item['product'] = product_map[product_id]
+                # Construct an image url.
+                    item['image'] = '{}/{}.jpg'.format(image_root, product_id)
+                except KeyError:
+                    item['product'] = 'Product Deleted'
+
+        return orders
+
     @http("GET", "/orders/<int:order_id>", expected_exceptions=OrderNotFound)
     def get_order(self, request, order_id):
         """Gets the order details for the order given by `order_id`.
