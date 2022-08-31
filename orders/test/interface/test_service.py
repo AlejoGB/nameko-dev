@@ -35,7 +35,7 @@ def test_get_order(orders_rpc, order):
 
 @pytest.mark.usefixtures('order_details')
 def test_get_orders(orders_rpc, order):
-    response = orders_rpc.get_orders()
+    response = orders_rpc.get_orders(0,50)
     assert response[0]['id'] == 1
     assert len(response) == 1
     assert response[0]['order_details'][0]['id'] == order.id
@@ -44,7 +44,7 @@ def test_get_orders(orders_rpc, order):
 @pytest.mark.usefixtures('db_session')
 def test_will_raise_when_orders_not_found(orders_rpc):
     with pytest.raises(RemoteError) as err:
-        orders_rpc.get_orders()
+        orders_rpc.get_orders(0,50)
     assert err.value.value == 'No orders found'
 
 @pytest.mark.usefixtures('db_session')

@@ -15,6 +15,8 @@ if [ $# -lt 1 ] ; then
 fi
 
 PREFIX=$1
+LIMIT=2
+PAGE=0
 
 # check if doing local smoke test
 if [ "${PREFIX}" != "local" ]; then
@@ -28,7 +30,7 @@ fi
 echo STD_APP_URL=${STD_APP_URL}
 
 # Test: Create Products
-echo "=== Recreating after deleting product id: the_odyssey ==="
+echo "=== CreatingRecreating after deleting product id: the_odyssey ==="
 curl -s -XPOST  "${STD_APP_URL}/products" \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
@@ -38,17 +40,6 @@ echo
 echo "=== Getting product id: the_odyssey ==="
 curl -s "${STD_APP_URL}/products/the_odyssey" | jq .
 
-# Test: Delete Product
-echo "=== Deleting product id: the_oddyssey ==="
-curl -s -XDELETE "${STD_APP_URL}/products/the_odyssey"
-echo
-# Test: Create product again
-echo "=== Creating a product id: the_odyssey ==="
-curl -s -XPOST  "${STD_APP_URL}/products" \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '{"id": "the_odyssey", "title": "The Odyssey", "passenger_capacity": 101, "maximum_speed": 5, "in_stock": 10}'
-echo
 # Test: Create Order
 echo "=== Creating Order ==="
 ORDER_ID=$(
@@ -59,23 +50,18 @@ ORDER_ID=$(
 )
 echo ${ORDER_ID}
 ID=$(echo ${ORDER_ID} | jq '.id')
-echo "=== Creating Order 2 ==="
-ORDER_ID_2=$(
-    curl -s -XPOST "${STD_APP_URL}/orders" \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '{"order_details": [{"product_id": "the_odyssey", "price": "100000.99", "quantity": 1}]}' 
-)
-echo ${ORDER_ID_2}
-ID=$(echo ${ORDER_ID_2} | jq '.id')
 
 # Test: Get Order back
 echo "=== Getting Order ==="
 curl -s "${STD_APP_URL}/orders/${ID}" | jq .
 
 # Test: List Orders
-echo "=== List Orders ==="
-curl -s "${STD_APP_URL}/orders" | jq .
+echo "=== Listing Orders ==="
+curl -s "${STD_APP_URL}/orders?page=${PAGE}&limit=${LIMIT}" | jq .
 
+# Test: Delete Product
+echo "=== Deleting product id: the_oddyssey ==="
+curl -s -XDELETE "${STD_APP_URL}/products/the_odyssey"
+echo
 
 

@@ -110,8 +110,8 @@ scenarios:
         - action: continue
         
     # 5. List Orders
-    - url: /orders
-      label: order-list-get
+    - url: /orders?page=0&limit=50
+      label: order-list
       think-time: uniform(0s, 0s)
       method: GET
         

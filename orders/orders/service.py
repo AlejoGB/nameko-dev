@@ -23,11 +23,12 @@ class OrdersService:
         return OrderSchema().dump(order).data
     
     @rpc
-    def get_orders(self):
-        orders = self.db.query(Order).all()
+    def get_orders(self, page, limit):
+        orders = self.db.query(Order).offset(page).limit(limit).all()
 
         if not orders:
             raise NotFound('No orders found')
+
         return OrderSchema(many=True).dump(orders).data
 
     @rpc
